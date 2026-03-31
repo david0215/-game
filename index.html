@@ -893,8 +893,8 @@ const questions = [
 
   // === 相愛關係 + 加力門訓 ===
   {
-    scenario: "小組長大衛在帶領查經時，總是精心準備PPT、控制時間在90分鐘內、確保每位組員都有發言機會。但他注意到組員們聚會時總是「很有禮貌」，卻從不分享真實的生命掙扎。",
-    question: "從「相愛關係」和「全民參與」兩個要素來看，大衛的小組最可能缺少了什麼？",
+    scenario: "小組長大雄在帶領查經時，總是精心準備PPT、控制時間在90分鐘內、確保每位組員都有發言機會。但他注意到組員們聚會時總是「很有禮貌」，卻從不分享真實的生命掙扎。",
+    question: "從「相愛關係」和「全民參與」兩個要素來看，大雄的小組最可能缺少了什麼？",
     options: [
       "更好的破冰遊戲和更專業的帶領技巧，畢竟好的技術才能打開人心",
       "一個有血有肉、願意脆弱的群體文化——小組不只是高效運轉的查經機器，更需要成為人們敢於放下面具、『齊生活』的安全空間",
@@ -1033,9 +1033,10 @@ let elementStats = {};
 let timerMode = 'gentle';
 
 const timerModeConfig = {
-  normal: { drainPerTick: 0.4, tickMs: 150, label: '標準' },
-  gentle: { drainPerTick: 0.25, tickMs: 150, label: '舒緩（長者友善）' },
-  noRush: { drainPerTick: 0.18, tickMs: 150, label: '從容（超慢速）' }
+  normal: { drainPerTick: 0.1666667, tickMs: 200, label: '標準' },
+  gentle: { drainPerTick: 0.1333333, tickMs: 200, label: '舒緩（長者友善）' },
+  noRush: { drainPerTick: 0.0833333, tickMs: 200, label: '從容（超慢速）' },
+  untimed: { label: '不限時', untimed: true }
 };
 
 const app = document.getElementById('app');
@@ -1082,7 +1083,11 @@ function showStart() {
         <button class="mode-btn timer-mode-btn" onclick="selectTimerMode('normal', this)">⏱️ 標準</button>
         <button class="mode-btn timer-mode-btn active" onclick="selectTimerMode('gentle', this)">🫶 舒緩（長者友善）</button>
         <button class="mode-btn timer-mode-btn" onclick="selectTimerMode('noRush', this)">🌿 從容（超慢速）</button>
+        <button class="mode-btn timer-mode-btn" onclick="selectTimerMode('untimed', this)">♾️ 不限時</button>
       </div>
+      <p class="subtitle" style="font-size:0.95em; margin-top:14px; margin-bottom:10px;">
+        想要更簡單版本？<a href="easy.html" style="color:#f6d365; font-weight:700; text-decoration:none;">前往 Easy 版</a>
+      </p>
       <button class="btn-start" onclick="startQuiz()">開始挑戰 🚀</button>
     </div>
   `;
@@ -1139,6 +1144,9 @@ function showQuestion() {
     `;
   });
 
+  const activeTimer = timerModeConfig[timerMode] || timerModeConfig.normal;
+  const showTimer = !activeTimer.untimed;
+
   app.innerHTML = `
     <div class="progress-area">
       <div class="progress-info">
@@ -1159,15 +1167,19 @@ function showQuestion() {
       <div class="question-scenario">${q.scenario}</div>
       <div class="question-text">${q.question}</div>
       <div class="options-list">${optionsHtml}</div>
-      <div class="timer-bar"><div class="timer-fill" id="timerFill" style="width:100%"></div></div>
+      ${showTimer ? '<div class="timer-bar"><div class="timer-fill" id="timerFill" style="width:100%"></div></div>' : ''}
       <div id="explanationArea"></div>
       <div id="nextArea"></div>
     </div>
   `;
 
-  timeLeft = 100;
-  const activeTimer = timerModeConfig[timerMode] || timerModeConfig.normal;
   clearInterval(timerInterval);
+  if (!showTimer) {
+    timeLeft = null;
+    return;
+  }
+
+  timeLeft = 100;
   timerInterval = setInterval(() => {
     if (answered) { clearInterval(timerInterval); return; }
     timeLeft -= activeTimer.drainPerTick;
@@ -1216,7 +1228,8 @@ function selectAnswer(displayIdx, origIdx) {
   trackElement(q.element, isCorrect);
 
   if (isCorrect) {
-    const bonus = timeLeft > 60 ? 15 : timeLeft > 30 ? 10 : 5;
+    const activeTimer = timerModeConfig[timerMode] || timerModeConfig.normal;
+    const bonus = activeTimer.untimed ? 10 : (timeLeft > 60 ? 15 : timeLeft > 30 ? 10 : 5);
     score += bonus;
     streak++;
     correctCount++;
